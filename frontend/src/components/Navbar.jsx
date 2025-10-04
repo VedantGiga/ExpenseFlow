@@ -3,6 +3,16 @@ import { useAuth } from '../context/AuthContext';
 const Navbar = () => {
   const { user, logout } = useAuth();
 
+<<<<<<< HEAD
+=======
+  const navItems = [
+    { path: '/dashboard', label: 'Dashboard', roles: ['manager', 'admin'] },
+    { path: '/employee-dashboard', label: 'My Expenses', roles: ['manager', 'admin'] },
+    { path: '/approvals', label: 'Approvals', roles: ['manager', 'admin'] },
+    { path: '/users', label: 'Users', roles: ['admin'] },
+    { path: '/approval-rules', label: 'Rules', roles: ['admin'] },
+  ];
+>>>>>>> 50314bfc318a51c9527f5309345c2880d6c92070
 
 
   return (
