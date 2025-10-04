@@ -22,8 +22,12 @@ const Approvals = () => {
     setLoading({ ...loading, [id]: true });
     try {
       await api.post(`/approvals/${id}`, { status });
-      // Refresh the approvals list
-      await fetchApprovals();
+      // Update local state instead of refetching
+      setApprovals(prev => prev.map(approval => 
+        approval.id === id 
+          ? { ...approval, status: status === 'approved' ? 'approved' : 'rejected' }
+          : approval
+      ));
     } catch (error) {
       console.error('Failed to process approval:', error);
     } finally {
@@ -107,20 +111,26 @@ const Approvals = () => {
                       </div>
                     </td>
                     <td className="px-8 py-6 whitespace-nowrap text-sm space-x-3">
-                      <button
-                        onClick={() => handleApproval(approval.id, 'approved')}
-                        disabled={loading[approval.id]}
-                        className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
-                      >
-                        ✅ Approve
-                      </button>
-                      <button
-                        onClick={() => handleApproval(approval.id, 'rejected')}
-                        disabled={loading[approval.id]}
-                        className="inline-flex items-center px-4 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-600 hover:text-white hover:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
-                      >
-                        ❌ Reject
-                      </button>
+                      {approval.status === 'pending' ? (
+                        <>
+                          <button
+                            onClick={() => handleApproval(approval.id, 'approved')}
+                            disabled={loading[approval.id]}
+                            className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
+                          >
+                            ✅ Approve
+                          </button>
+                          <button
+                            onClick={() => handleApproval(approval.id, 'rejected')}
+                            disabled={loading[approval.id]}
+                            className="inline-flex items-center px-4 py-2 border border-red-300 text-red-700 text-sm font-medium rounded-lg hover:bg-red-600 hover:text-white hover:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
+                          >
+                            ❌ Reject
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-gray-500 text-sm">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

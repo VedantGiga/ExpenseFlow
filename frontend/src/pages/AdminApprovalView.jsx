@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
+import { sendPasswordEmail } from '../services/emailService';
 
 const AdminApprovalView = () => {
   const [activeTab, setActiveTab] = useState('approval-rules');
@@ -24,7 +25,6 @@ const AdminApprovalView = () => {
   const [userFormData, setUserFormData] = useState({
     name: '',
     email: '',
-    password: '',
     role: 'employee',
     manager_id: ''
   });
@@ -93,7 +93,7 @@ const AdminApprovalView = () => {
     e.preventDefault();
     try {
       await api.post('/users', userFormData);
-      setUserFormData({ name: '', email: '', password: '', role: 'employee', manager_id: '' });
+      setUserFormData({ name: '', email: '', role: 'employee', manager_id: '' });
       setShowUserForm(false);
       fetchUsers();
     } catch (error) {
@@ -115,11 +115,20 @@ const AdminApprovalView = () => {
 
   const sendPassword = async (userId, userEmail) => {
     try {
-      // This would typically send an email with password reset link
-      console.log(`Sending password to ${userEmail}`);
-      alert(`Password sent to ${userEmail}`);
+      const response = await api.post(`/users/${userId}/send-password`);
+      const userName = users.find(u => u.id === userId)?.name || 'User';
+      
+      // Send email using EmailJS service
+      const emailResult = await sendPasswordEmail(userEmail, userName, response.data.password);
+      
+      if (emailResult.success) {
+        alert(`Password has been sent to ${userEmail}. The user can now login and change their password.`);
+      } else {
+        alert(`Password generated but email failed to send. Please check EmailJS configuration.`);
+      }
     } catch (error) {
       console.error('Failed to send password:', error);
+      alert('Failed to send password');
     }
   };
 
@@ -360,14 +369,7 @@ const AdminApprovalView = () => {
                     className="border border-gray-300 rounded-lg px-3 py-2"
                     required
                   />
-                  <input
-                    type="password"
-                    placeholder="Password"
-                    value={userFormData.password}
-                    onChange={(e) => setUserFormData({...userFormData, password: e.target.value})}
-                    className="border border-gray-300 rounded-lg px-3 py-2"
-                    required
-                  />
+
                   <select
                     value={userFormData.role}
                     onChange={(e) => setUserFormData({...userFormData, role: e.target.value})}
