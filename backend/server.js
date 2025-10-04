@@ -244,12 +244,12 @@ app.post('/api/users', authenticateToken, async (req, res) => {
     return res.status(403).json({ error: 'Admin access required' });
   }
 
-  const { name, email, password, role, manager_id } = req.body;
+  const { name, email, role, manager_id } = req.body;
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create user without password - admin will send password later
     const result = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, company_id, manager_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role',
-      [name, email, hashedPassword, role, req.user.company_id, manager_id || null]
+      [name, email, null, role, req.user.company_id, manager_id || null]
     );
     res.json(result.rows[0]);
   } catch (error) {
@@ -328,6 +328,38 @@ app.post('/api/approval-rules', authenticateToken, async (req, res) => {
     }
     
     res.json({ id: ruleResult.rows[0].id });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Send password reset email
+app.post('/api/users/:id/send-password', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+
+  try {
+    const userId = req.params.id;
+    const user = await pool.query('SELECT email FROM users WHERE id = $1 AND company_id = $2', [userId, req.user.company_id]);
+    
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate random password (8 characters with letters and numbers)
+    const randomPassword = Math.random().toString(36).slice(-8) + Math.floor(Math.random() * 100);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+    
+    // Update user password
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashedPassword, userId]);
+    
+    // Return password for EmailJS to send
+    res.json({ 
+      message: 'Password generated successfully', 
+      email: user.rows[0].email,
+      password: randomPassword
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
