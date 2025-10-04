@@ -12,6 +12,9 @@ import Settings from './pages/Settings';
 import UserManagement from './pages/UserManagement';
 import ApprovalRules from './pages/ApprovalRules';
 import AdminApprovalView from './pages/AdminApprovalView';
+import EmployeeExpenses from './pages/EmployeeExpenses';
+import EmployeeDashboard from './pages/EmployeeDashboard';
+import AddExpense from './pages/AddExpense';
 
 const Layout = ({ children }) => {
   const { user } = useAuth();
@@ -43,6 +46,30 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['employee', 'admin']}>
                   <Expenses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/employee-expenses"
+              element={
+                <ProtectedRoute allowedRoles={['employee', 'manager', 'admin']}>
+                  <EmployeeExpenses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/employee-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['employee', 'manager', 'admin']}>
+                  <EmployeeDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/add-expense"
+              element={
+                <ProtectedRoute allowedRoles={['employee', 'manager', 'admin']}>
+                  <AddExpense />
                 </ProtectedRoute>
               }
             />
