@@ -12,6 +12,8 @@ const EmployeeDashboard = () => {
 
   useEffect(() => {
     fetchExpenses();
+    const interval = setInterval(fetchExpenses, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchExpenses = async () => {
@@ -78,60 +80,22 @@ const EmployeeDashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center">
-              <div className="bg-blue-100 rounded-full p-3 mr-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Expenses</p>
-                <p className="text-2xl font-bold text-gray-900">{expenses.length}</p>
-              </div>
+            <div className="text-center">
+              <p className="text-lg font-medium text-gray-900">₹{expenses.filter(e => e.status === 'draft').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0).toLocaleString()} to submit</p>
             </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center">
-              <div className="bg-yellow-100 rounded-full p-3 mr-4">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending || 0}</p>
-              </div>
+            <div className="text-center">
+              <p className="text-lg font-medium text-gray-900">₹{expenses.filter(e => e.status === 'pending').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0).toLocaleString()} waiting approval</p>
             </div>
           </div>
 
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center">
-              <div className="bg-green-100 rounded-full p-3 mr-4">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Approved</p>
-                <p className="text-2xl font-bold text-green-600">{stats.approved || 0}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <div className="flex items-center">
-              <div className="bg-purple-100 rounded-full p-3 mr-4">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Amount</p>
-                <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats.total || 0)}</p>
-              </div>
+            <div className="text-center">
+              <p className="text-lg font-medium text-gray-900">₹{expenses.filter(e => e.status === 'approved').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0).toLocaleString()} approved</p>
             </div>
           </div>
         </div>
@@ -151,7 +115,7 @@ const EmployeeDashboard = () => {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1)}
+                  {status === 'all' ? 'All' : status === 'draft' ? 'To Submit' : status === 'pending' ? 'Waiting Approval' : status.charAt(0).toUpperCase() + status.slice(1)}
                 </button>
               ))}
             </div>
@@ -199,7 +163,7 @@ const EmployeeDashboard = () => {
                       </td>
                       <td className="py-4 px-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(expense.status)}`}>
-                          {expense.status === 'pending' ? 'Under Review' : expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
+                          {expense.status === 'pending' ? 'Under Review' : expense.status === 'draft' ? 'To Submit' : expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-sm text-gray-600">
