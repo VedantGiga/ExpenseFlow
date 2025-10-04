@@ -39,7 +39,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/admin-signup" element={<AdminSignup />} />
-            <Route path="/" element={<Navigate to="/admin-approval-view" replace />} />
+            <Route path="/" element={<Navigate to="/employee-dashboard" replace />} />
 
             <Route
               path="/expenses"
