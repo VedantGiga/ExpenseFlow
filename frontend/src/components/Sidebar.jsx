@@ -6,13 +6,9 @@ const Sidebar = () => {
   const { user } = useAuth();
 
   const navItems = [
-    { path: '/dashboard', icon: HomeIcon, label: 'Dashboard', roles: ['employee', 'manager', 'admin'] },
-    { path: '/expenses', icon: ClipboardDocumentListIcon, label: 'Expenses', roles: ['employee', 'admin'] },
-    { path: '/approvals', icon: CheckBadgeIcon, label: 'Approvals', roles: ['manager', 'admin'] },
-    { path: '/users', icon: UserIcon, label: 'Users', roles: ['admin'] },
-    { path: '/approval-rules', icon: DocumentCheckIcon, label: 'Approval Rules', roles: ['admin'] },
+    { path: '/expenses', icon: ClipboardDocumentListIcon, label: 'Expenses', roles: ['employee'] },
+    { path: '/approvals', icon: CheckBadgeIcon, label: 'Approvals', roles: ['manager'] },
     { path: '/admin-approval-view', icon: DocumentCheckIcon, label: 'Admin View', roles: ['admin'] },
-    { path: '/settings', icon: Cog6ToothIcon, label: 'Settings', roles: ['admin'] },
   ];
 
   return (
