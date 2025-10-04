@@ -3,13 +3,13 @@
 
 export const EMAILJS_CONFIG = {
   // Your EmailJS Service ID (from EmailJS dashboard)
-  SERVICE_ID: 'service_expenseflow',
+  SERVICE_ID: 'service_vb86q0g',
   
   // Your EmailJS Template ID (from EmailJS dashboard)
-  TEMPLATE_ID: 'template_password_reset',
+  TEMPLATE_ID: 'template_9oumaqj',
   
   // Your EmailJS Public Key (from EmailJS dashboard)
-  PUBLIC_KEY: 'your_public_key_here'
+  PUBLIC_KEY: 'ukgrP7KR2JVYsfFql'
 };
 
 // Email Template Variables (for reference)
