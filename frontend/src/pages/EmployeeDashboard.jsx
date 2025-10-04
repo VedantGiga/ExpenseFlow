@@ -81,21 +81,39 @@ const EmployeeDashboard = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-gray-400">
             <div className="text-center">
-              <p className="text-lg font-medium text-gray-900">₹{expenses.filter(e => e.status === 'draft').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0).toLocaleString()} to submit</p>
+              <div className="text-2xl font-bold text-gray-600 mb-1">
+                {expenses.filter(e => e.status === 'draft').length}
+              </div>
+              <p className="text-sm text-gray-500 mb-2">To Submit</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {formatCurrency(expenses.filter(e => e.status === 'draft').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0), expenses.filter(e => e.status === 'draft')[0]?.original_currency || 'USD')}
+              </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-400">
             <div className="text-center">
-              <p className="text-lg font-medium text-gray-900">₹{expenses.filter(e => e.status === 'pending').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0).toLocaleString()} waiting approval</p>
+              <div className="text-2xl font-bold text-yellow-600 mb-1">
+                {expenses.filter(e => e.status === 'pending').length}
+              </div>
+              <p className="text-sm text-gray-500 mb-2">Waiting Approval</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {formatCurrency(expenses.filter(e => e.status === 'pending').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0), expenses.filter(e => e.status === 'pending')[0]?.original_currency || 'USD')}
+              </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-400">
             <div className="text-center">
-              <p className="text-lg font-medium text-gray-900">₹{expenses.filter(e => e.status === 'approved').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0).toLocaleString()} approved</p>
+              <div className="text-2xl font-bold text-green-600 mb-1">
+                {expenses.filter(e => e.status === 'approved').length}
+              </div>
+              <p className="text-sm text-gray-500 mb-2">Approved</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {formatCurrency(expenses.filter(e => e.status === 'approved').reduce((sum, e) => sum + parseFloat(e.amount || 0), 0), expenses.filter(e => e.status === 'approved')[0]?.original_currency || 'USD')}
+              </p>
             </div>
           </div>
         </div>
@@ -163,7 +181,11 @@ const EmployeeDashboard = () => {
                       </td>
                       <td className="py-4 px-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(expense.status)}`}>
-                          {expense.status === 'pending' ? 'Under Review' : expense.status === 'draft' ? 'To Submit' : expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
+                          {expense.status === 'draft' ? 'To Submit' : 
+                           expense.status === 'pending' ? 'Waiting Approval' : 
+                           expense.status === 'approved' ? 'Approved' :
+                           expense.status === 'rejected' ? 'Rejected' :
+                           expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-sm text-gray-600">
