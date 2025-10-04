@@ -37,3 +37,34 @@ export const sendPasswordEmail = async (userEmail, userName, password) => {
     return { success: false, error };
   }
 };
+
+export const sendOTPEmail = async (userEmail, userName, otp) => {
+  try {
+    console.log('Sending OTP email to:', userEmail, 'Name:', userName);
+    
+    if (!window.emailjs) {
+      throw new Error('EmailJS not loaded');
+    }
+
+    const templateParams = {
+      to_email: userEmail,
+      from_name: 'ExpenseFlow Support',
+      user_name: userName,
+      otp_code: otp
+    };
+
+    console.log('OTP template params:', templateParams);
+
+    const response = await window.emailjs.send(
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.OTP_TEMPLATE_ID,
+      templateParams
+    );
+
+    console.log('OTP EmailJS response:', response);
+    return { success: true, response };
+  } catch (error) {
+    console.error('OTP EmailJS Error:', error);
+    return { success: false, error };
+  }
+};

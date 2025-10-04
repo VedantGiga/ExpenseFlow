@@ -14,9 +14,12 @@ const AddExpense = () => {
     currency: 'USD',
     paid_by: '',
     expense_date: '',
-    approver_id: ''
+    approver_id: '',
+    remarks: ''
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [receipt, setReceipt] = useState(null);
+  const [receiptPreview, setReceiptPreview] = useState(null);
 
   useEffect(() => {
     fetchEmployees();
@@ -28,6 +31,16 @@ const AddExpense = () => {
       setEmployees(response.data);
     } catch (error) {
       console.error('Failed to fetch employees:', error);
+    }
+  };
+
+  const handleReceiptChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setReceipt(file);
+      const reader = new FileReader();
+      reader.onload = (e) => setReceiptPreview(e.target.result);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -59,17 +72,34 @@ const AddExpense = () => {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Expense</h1>
-                  <p className="text-gray-600">Submit your expense for approval</p>
-                </div>
-                <button 
-                  onClick={() => navigate('/employee-dashboard')}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+              <div className="relative mb-6">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleReceiptChange}
+                  className="hidden"
+                  id="receipt-upload"
+                />
+                <label 
+                  htmlFor="receipt-upload" 
+                  className="absolute top-0 left-0 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg cursor-pointer transition-colors text-sm font-medium"
                 >
-                  ← Back to Dashboard
-                </button>
+                  Attach Receipt
+                </label>
+                
+                <div className="flex items-center justify-between">
+                  <div className="ml-16">
+                    {receiptPreview && (
+                      <p className="text-sm text-green-600 mt-1">✓ Receipt attached</p>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => navigate('/employee-dashboard')}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    ← Back to Dashboard
+                  </button>
+                </div>
               </div>
           
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -152,6 +182,17 @@ const AddExpense = () => {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
+                  <textarea
+                    value={formData.remarks}
+                    onChange={(e) => setFormData({...formData, remarks: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Add any additional notes or remarks"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Approver</label>
                   <select
                     value={formData.approver_id}
@@ -164,6 +205,8 @@ const AddExpense = () => {
                     ))}
                   </select>
                 </div>
+
+
 
                 <div className="flex gap-4 pt-6">
                   <button

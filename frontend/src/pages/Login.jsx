@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../utils/api';
-import { sendPasswordEmail } from '../services/emailService';
+import { sendOTPEmail } from '../services/emailService';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 const Login = () => {
@@ -12,6 +12,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -47,21 +48,22 @@ const Login = () => {
 
     try {
       const response = await api.post('/auth/forgot-password', { email: forgotPasswordEmail });
-      const emailResult = await sendPasswordEmail(response.data.email, response.data.name, response.data.password);
+      const emailResult = await sendOTPEmail(response.data.email, response.data.name, response.data.otp);
       
       if (emailResult.success) {
-        alert(`New password has been sent to ${forgotPasswordEmail}`);
-        setShowForgotPassword(false);
-        setForgotPasswordEmail('');
+        alert(`OTP has been sent to ${forgotPasswordEmail}`);
+        navigate('/otp-verification', { state: { email: forgotPasswordEmail } });
       } else {
-        setError('Password generated but email failed to send');
+        setError('OTP generated but email failed to send');
       }
     } catch (error) {
-      setError(error.response?.data?.error || 'Failed to reset password');
+      setError(error.response?.data?.error || 'Failed to send OTP');
     } finally {
       setLoading(false);
     }
   };
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -76,7 +78,7 @@ const Login = () => {
         {showForgotPassword && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Reset Password</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Send OTP</h2>
               <form onSubmit={handleForgotPassword}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -97,7 +99,7 @@ const Login = () => {
                     disabled={loading}
                     className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
                   >
-                    {loading ? 'Sending...' : 'Send New Password'}
+                    {loading ? 'Sending...' : 'Send OTP'}
                   </button>
                   <button
                     type="button"
@@ -111,6 +113,8 @@ const Login = () => {
             </div>
           </div>
         )}
+
+
 
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
