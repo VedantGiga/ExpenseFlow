@@ -59,7 +59,7 @@ app.post('/api/auth/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const userResult = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, country, company_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role',
-      ['Admin', email, hashedPassword, 'admin', country, companyResult.rows[0].id]
+      [companyName, email, hashedPassword, 'admin', country, companyResult.rows[0].id]
     );
 
     const token = jwt.sign({ userId: userResult.rows[0].id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
