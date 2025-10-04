@@ -1,17 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ExpenseForm from '../components/ExpenseForm';
 import ExpenseList from '../components/ExpenseList';
+import { getExpenses } from '../utils/api';
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
 
-  const handleSubmitExpense = (expenseData) => {
-    const newExpense = {
-      id: Date.now(),
-      ...expenseData,
-      status: 'pending'
-    };
-    setExpenses([...expenses, newExpense]);
+  useEffect(() => {
+    fetchExpenses();
+  }, []);
+
+  const fetchExpenses = async () => {
+    try {
+      const response = await getExpenses();
+      setExpenses(response.data);
+    } catch (error) {
+      console.error('Failed to fetch expenses:', error);
+    }
+  };
+
+  const handleSubmitExpense = () => {
+    fetchExpenses(); // Refresh list after submission
   };
 
   return (

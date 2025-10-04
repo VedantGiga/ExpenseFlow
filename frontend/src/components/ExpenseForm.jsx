@@ -1,27 +1,50 @@
 import { useState } from 'react';
+import { submitExpense } from '../utils/api';
 
 const ExpenseForm = ({ onSubmit }) => {
   const [formData, setFormData] = useState({
     amount: '',
     category: '',
-    date: '',
+    expense_date: '',
     description: '',
+    original_currency: 'USD',
     receipt: null
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'INR'];
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
-    setFormData({ amount: '', category: '', date: '', description: '', receipt: null });
+    setLoading(true);
+    setError('');
+    
+    try {
+      await submitExpense(formData);
+      setFormData({ amount: '', category: '', expense_date: '', description: '', original_currency: 'USD', receipt: null });
+      onSubmit();
+    } catch (error) {
+      setError(error.response?.data?.error || 'Failed to submit expense');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow space-y-4">
       <h3 className="text-lg font-medium text-gray-800">Add Expense</h3>
       
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
+      
       <div className="grid grid-cols-2 gap-4">
         <input
           type="number"
+          step="0.01"
           placeholder="Amount"
           value={formData.amount}
           onChange={(e) => setFormData({...formData, amount: e.target.value})}
@@ -29,22 +52,35 @@ const ExpenseForm = ({ onSubmit }) => {
           required
         />
         <select
-          value={formData.category}
-          onChange={(e) => setFormData({...formData, category: e.target.value})}
+          value={formData.original_currency}
+          onChange={(e) => setFormData({...formData, original_currency: e.target.value})}
           className="border rounded-lg px-3 py-2"
-          required
         >
-          <option value="">Category</option>
-          <option value="travel">Travel</option>
-          <option value="meals">Meals</option>
-          <option value="office">Office</option>
+          {currencies.map(currency => (
+            <option key={currency} value={currency}>{currency}</option>
+          ))}
         </select>
       </div>
 
+      <select
+        value={formData.category}
+        onChange={(e) => setFormData({...formData, category: e.target.value})}
+        className="w-full border rounded-lg px-3 py-2"
+        required
+      >
+        <option value="">Select Category</option>
+        <option value="travel">Travel</option>
+        <option value="meals">Meals</option>
+        <option value="office">Office Supplies</option>
+        <option value="accommodation">Accommodation</option>
+        <option value="transport">Transport</option>
+        <option value="other">Other</option>
+      </select>
+
       <input
         type="date"
-        value={formData.date}
-        onChange={(e) => setFormData({...formData, date: e.target.value})}
+        value={formData.expense_date}
+        onChange={(e) => setFormData({...formData, expense_date: e.target.value})}
         className="w-full border rounded-lg px-3 py-2"
         required
       />
@@ -59,12 +95,17 @@ const ExpenseForm = ({ onSubmit }) => {
 
       <input
         type="file"
+        accept="image/*,.pdf"
         onChange={(e) => setFormData({...formData, receipt: e.target.files[0]})}
         className="w-full border rounded-lg px-3 py-2"
       />
 
-      <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
-        Submit Expense
+      <button 
+        type="submit" 
+        disabled={loading}
+        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+      >
+        {loading ? 'Submitting...' : 'Submit Expense'}
       </button>
     </form>
   );

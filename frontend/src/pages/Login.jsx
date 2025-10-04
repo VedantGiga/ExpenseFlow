@@ -61,10 +61,18 @@ const Login = () => {
           </button>
         </form>
         
-        <div className="mt-4 text-center">
-          <Link to="/admin-signup" className="text-blue-600 hover:text-blue-800 text-sm">
-            Create Admin Account
-          </Link>
+        <div className="mt-4 text-center space-y-2">
+          <div>
+            <Link to="#" className="text-blue-600 hover:text-blue-800 text-sm">
+              Forgot Password?
+            </Link>
+          </div>
+          <div className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link to="/admin-signup" className="text-blue-600 hover:text-blue-800">
+              Sign up
+            </Link>
+          </div>
         </div>
       </div>
     </div>
