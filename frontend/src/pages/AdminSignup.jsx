@@ -81,7 +81,9 @@ const AdminSignup = () => {
 
       localStorage.setItem('token', response.data.token);
       login(response.data.user.role);
-      navigate('/dashboard');
+      
+      // Admin signup always goes to admin view
+      navigate('/admin-approval-view');
     } catch (error) {
       setError(error.response?.data?.error || 'Signup failed');
     } finally {

@@ -21,7 +21,15 @@ const Login = () => {
       const response = await api.post('/auth/login', formData);
       localStorage.setItem('token', response.data.token);
       login(response.data.user.role);
-      navigate('/dashboard');
+      
+      // Role-based redirect
+      if (response.data.user.role === 'admin') {
+        navigate('/admin-approval-view');
+      } else if (response.data.user.role === 'manager') {
+        navigate('/approvals');
+      } else {
+        navigate('/expenses');
+      }
     } catch (error) {
       setError(error.response?.data?.error || 'Login failed');
     } finally {
