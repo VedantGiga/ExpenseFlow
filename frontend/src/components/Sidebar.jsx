@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { HomeIcon, ClipboardDocumentListIcon, CheckBadgeIcon, Cog6ToothIcon, UserIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, ClipboardDocumentListIcon, CheckBadgeIcon, Cog6ToothIcon, UserIcon, DocumentCheckIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
@@ -10,6 +10,8 @@ const Sidebar = () => {
     { path: '/expenses', icon: ClipboardDocumentListIcon, label: 'Expenses', roles: ['employee', 'admin'] },
     { path: '/approvals', icon: CheckBadgeIcon, label: 'Approvals', roles: ['manager', 'admin'] },
     { path: '/users', icon: UserIcon, label: 'Users', roles: ['admin'] },
+    { path: '/approval-rules', icon: DocumentCheckIcon, label: 'Approval Rules', roles: ['admin'] },
+    { path: '/admin-approval-view', icon: DocumentCheckIcon, label: 'Admin View', roles: ['admin'] },
     { path: '/settings', icon: Cog6ToothIcon, label: 'Settings', roles: ['admin'] },
   ];
 

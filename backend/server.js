@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from './database/db.js';
 import { authenticateToken } from './middleware/auth.js';
+import { createApprovalWorkflow, processApproval } from './services/approvalService.js';
 
 dotenv.config();
 
@@ -37,7 +38,7 @@ const getCurrencyForCountry = async (country) => {
 
 // Auth routes
 app.post('/api/auth/signup', async (req, res) => {
-  const { name, email, password, country, companyName } = req.body;
+  const { companyName, email, password, country } = req.body;
   try {
     const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
@@ -46,16 +47,19 @@ app.post('/api/auth/signup', async (req, res) => {
 
     const currency = await getCurrencyForCountry(country);
     
+    // Set company base currency in environment
+    process.env.COMPANY_BASE_CURRENCY = currency;
+    
     // Create company
     const companyResult = await pool.query(
       'INSERT INTO companies (name, country, currency) VALUES ($1, $2, $3) RETURNING id',
-      [companyName || `${name}'s Company`, country, currency]
+      [companyName, country, currency]
     );
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const userResult = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, country, company_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role',
-      [name, email, hashedPassword, 'admin', country, companyResult.rows[0].id]
+      ['Admin', email, hashedPassword, 'admin', country, companyResult.rows[0].id]
     );
 
     const token = jwt.sign({ userId: userResult.rows[0].id }, process.env.JWT_SECRET, { expiresIn: '24h' });
@@ -86,15 +90,44 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Get expenses
+// Get expenses (role-based)
 app.get('/api/expenses', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT e.*, u.name as user_name 
-      FROM expenses e 
-      JOIN users u ON e.user_id = u.id 
-      ORDER BY e.created_at DESC
-    `);
+    let query, params;
+    
+    if (req.user.role === 'admin') {
+      query = `
+        SELECT e.*, u.name as user_name, c.currency as company_currency
+        FROM expenses e 
+        JOIN users u ON e.user_id = u.id 
+        JOIN companies c ON u.company_id = c.id
+        WHERE u.company_id = $1
+        ORDER BY e.created_at DESC
+      `;
+      params = [req.user.company_id];
+    } else if (req.user.role === 'manager') {
+      query = `
+        SELECT e.*, u.name as user_name, c.currency as company_currency
+        FROM expenses e 
+        JOIN users u ON e.user_id = u.id 
+        JOIN companies c ON u.company_id = c.id
+        WHERE (u.manager_id = $1 OR u.id = $1) AND u.company_id = $2
+        ORDER BY e.created_at DESC
+      `;
+      params = [req.user.id, req.user.company_id];
+    } else {
+      query = `
+        SELECT e.*, u.name as user_name, c.currency as company_currency
+        FROM expenses e 
+        JOIN users u ON e.user_id = u.id 
+        JOIN companies c ON u.company_id = c.id
+        WHERE e.user_id = $1
+        ORDER BY e.created_at DESC
+      `;
+      params = [req.user.id];
+    }
+    
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -103,30 +136,55 @@ app.get('/api/expenses', authenticateToken, async (req, res) => {
 
 // Create expense
 app.post('/api/expenses', authenticateToken, async (req, res) => {
-  const { amount, category, description, expense_date } = req.body;
+  const { amount, category, description, expense_date, original_currency } = req.body;
   const user_id = req.user.id;
   try {
+    // Get company currency for conversion
+    const company = await pool.query('SELECT currency FROM companies WHERE id = $1', [req.user.company_id]);
+    const companyCurrency = company.rows[0].currency || process.env.COMPANY_BASE_CURRENCY;
+    
+    // Simple exchange rate (in real app, use currency API)
+    const exchangeRate = original_currency === companyCurrency ? 1.0 : 0.85;
+    const companyAmount = amount * exchangeRate;
+
     const result = await pool.query(
-      'INSERT INTO expenses (user_id, amount, category, description, expense_date) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [user_id, amount, category, description, expense_date]
+      'INSERT INTO expenses (user_id, amount, category, description, expense_date, original_currency, exchange_rate, company_currency_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [user_id, amount, category, description, expense_date, original_currency || companyCurrency, exchangeRate, companyAmount]
     );
+
+    // Create approval workflow
+    await createApprovalWorkflow(result.rows[0].id, req.user.company_id, companyAmount);
+    
     res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get pending approvals
+// Get pending approvals for current user
 app.get('/api/approvals', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT e.*, u.name as employee_name 
+      SELECT e.*, u.name as employee_name, ea.comments, ea.step_order, c.currency as company_currency
       FROM expenses e 
       JOIN users u ON e.user_id = u.id 
-      WHERE e.status = 'pending'
+      JOIN expense_approvals ea ON e.id = ea.expense_id
+      JOIN companies c ON u.company_id = c.id
+      WHERE ea.approver_id = $1 AND ea.status = 'pending' AND e.current_step = ea.step_order
       ORDER BY e.created_at DESC
-    `);
+    `, [req.user.id]);
     res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Process approval
+app.post('/api/approvals/:expenseId', authenticateToken, async (req, res) => {
+  const { status, comments } = req.body;
+  try {
+    const result = await processApproval(req.params.expenseId, req.user.id, status, comments);
+    res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -179,6 +237,49 @@ app.put('/api/users/:id', authenticateToken, async (req, res) => {
       [role, manager_id || null, req.params.id, req.user.company_id]
     );
     res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Approval rules management
+app.get('/api/approval-rules', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  try {
+    const result = await pool.query(
+      'SELECT ar.*, u.name as specific_approver_name FROM approval_rules ar LEFT JOIN users u ON ar.specific_approver_id = u.id WHERE ar.company_id = $1',
+      [req.user.company_id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/approval-rules', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  
+  const { name, min_amount, max_amount, percentage_threshold, specific_approver_id, is_hybrid, steps } = req.body;
+  try {
+    const ruleResult = await pool.query(
+      'INSERT INTO approval_rules (company_id, name, min_amount, max_amount, percentage_threshold, specific_approver_id, is_hybrid) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+      [req.user.company_id, name, min_amount, max_amount, percentage_threshold, specific_approver_id, is_hybrid]
+    );
+    
+    // Add steps
+    for (const step of steps || []) {
+      await pool.query(
+        'INSERT INTO approval_steps (rule_id, step_order, approver_id, is_manager_step) VALUES ($1, $2, $3, $4)',
+        [ruleResult.rows[0].id, step.order, step.approver_id, step.is_manager_step]
+      );
+    }
+    
+    res.json({ id: ruleResult.rows[0].id });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

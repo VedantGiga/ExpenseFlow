@@ -10,6 +10,8 @@ import Expenses from './pages/Expenses';
 import Approvals from './pages/Approvals';
 import Settings from './pages/Settings';
 import UserManagement from './pages/UserManagement';
+import ApprovalRules from './pages/ApprovalRules';
+import AdminApprovalView from './pages/AdminApprovalView';
 
 const Layout = ({ children }) => {
   const { user } = useAuth();
@@ -75,6 +77,22 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/approval-rules"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <ApprovalRules />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin-approval-view"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminApprovalView />
                 </ProtectedRoute>
               }
             />

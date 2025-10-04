@@ -1,10 +1,4 @@
 const ExpenseList = ({ expenses = [] }) => {
-  const mockExpenses = [
-    { id: 1, amount: 150, category: 'travel', date: '2024-01-15', status: 'pending' },
-    { id: 2, amount: 45, category: 'meals', date: '2024-01-14', status: 'approved' },
-  ];
-
-  const displayExpenses = expenses.length ? expenses : mockExpenses;
 
   return (
     <div className="bg-white rounded-lg shadow">
@@ -22,11 +16,18 @@ const ExpenseList = ({ expenses = [] }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {displayExpenses.map((expense) => (
+            {expenses.map((expense) => (
               <tr key={expense.id}>
-                <td className="px-6 py-4 text-sm text-gray-900">${expense.amount}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  {expense.original_currency} {expense.amount}
+                  {expense.company_currency && expense.original_currency !== expense.company_currency && (
+                    <div className="text-xs text-gray-500">
+                      ≈ {expense.company_currency} {expense.company_currency_amount}
+                    </div>
+                  )}
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-900 capitalize">{expense.category}</td>
-                <td className="px-6 py-4 text-sm text-gray-900">{expense.date}</td>
+                <td className="px-6 py-4 text-sm text-gray-900">{expense.expense_date}</td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 text-xs rounded-full ${
                     expense.status === 'approved' ? 'bg-green-100 text-green-800' :

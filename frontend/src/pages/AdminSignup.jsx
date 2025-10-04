@@ -5,12 +5,11 @@ import { api } from '../utils/api';
 
 const AdminSignup = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    companyName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    country: '',
-    companyName: ''
+    country: ''
   });
   const [error, setError] = useState('');
   const [countries, setCountries] = useState([]);
@@ -48,11 +47,10 @@ const AdminSignup = () => {
 
     try {
       const response = await api.post('/auth/signup', {
-        name: formData.name,
+        companyName: formData.companyName,
         email: formData.email,
         password: formData.password,
-        country: formData.country,
-        companyName: formData.companyName
+        country: formData.country
       });
 
       localStorage.setItem('token', response.data.token);
@@ -66,7 +64,7 @@ const AdminSignup = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Admin Signup</h2>
+        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Company Signup</h2>
         
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -77,9 +75,9 @@ const AdminSignup = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
-            placeholder="Full Name"
-            value={formData.name}
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
+            placeholder="Company Name"
+            value={formData.companyName}
+            onChange={(e) => setFormData({...formData, companyName: e.target.value})}
             className="w-full border rounded-lg px-3 py-2"
             required
           />
@@ -111,13 +109,7 @@ const AdminSignup = () => {
             required
           />
 
-          <input
-            type="text"
-            placeholder="Company Name (Optional)"
-            value={formData.companyName}
-            onChange={(e) => setFormData({...formData, companyName: e.target.value})}
-            className="w-full border rounded-lg px-3 py-2"
-          />
+
 
           <select
             value={formData.country}
@@ -138,7 +130,7 @@ const AdminSignup = () => {
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
           >
-            Create Admin Account
+            Create Company Account
           </button>
         </form>
       </div>
