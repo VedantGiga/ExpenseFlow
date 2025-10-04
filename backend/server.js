@@ -100,7 +100,7 @@ app.get('/api/expenses', authenticateToken, async (req, res) => {
         SELECT e.*, u.name as user_name, c.currency as company_currency
         FROM expenses e 
         JOIN users u ON e.user_id = u.id 
-        JOIN companies c ON u.company_id = c.id
+        LEFT JOIN companies c ON u.company_id = c.id
         WHERE u.company_id = $1
         ORDER BY e.created_at DESC
       `;
@@ -110,7 +110,7 @@ app.get('/api/expenses', authenticateToken, async (req, res) => {
         SELECT e.*, u.name as user_name, c.currency as company_currency
         FROM expenses e 
         JOIN users u ON e.user_id = u.id 
-        JOIN companies c ON u.company_id = c.id
+        LEFT JOIN companies c ON u.company_id = c.id
         WHERE (u.manager_id = $1 OR u.id = $1) AND u.company_id = $2
         ORDER BY e.created_at DESC
       `;
@@ -120,7 +120,7 @@ app.get('/api/expenses', authenticateToken, async (req, res) => {
         SELECT e.*, u.name as user_name, c.currency as company_currency
         FROM expenses e 
         JOIN users u ON e.user_id = u.id 
-        JOIN companies c ON u.company_id = c.id
+        LEFT JOIN companies c ON u.company_id = c.id
         WHERE e.user_id = $1
         ORDER BY e.created_at DESC
       `;
@@ -136,20 +136,20 @@ app.get('/api/expenses', authenticateToken, async (req, res) => {
 
 // Create expense
 app.post('/api/expenses', authenticateToken, async (req, res) => {
-  const { amount, category, description, expense_date, original_currency } = req.body;
+  const { amount, category, description, expense_date, original_currency, paid_by } = req.body;
   const user_id = req.user.id;
   try {
     // Get company currency for conversion
     const company = await pool.query('SELECT currency FROM companies WHERE id = $1', [req.user.company_id]);
-    const companyCurrency = company.rows[0].currency || process.env.COMPANY_BASE_CURRENCY;
+    const companyCurrency = company.rows[0]?.currency || process.env.COMPANY_BASE_CURRENCY || 'USD';
     
     // Simple exchange rate (in real app, use currency API)
     const exchangeRate = original_currency === companyCurrency ? 1.0 : 0.85;
     const companyAmount = amount * exchangeRate;
 
     const result = await pool.query(
-      'INSERT INTO expenses (user_id, amount, category, description, expense_date, original_currency, exchange_rate, company_currency_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [user_id, amount, category, description, expense_date, original_currency || companyCurrency, exchangeRate, companyAmount]
+      'INSERT INTO expenses (user_id, amount, category, description, expense_date, original_currency, exchange_rate, company_currency_amount, paid_by, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+      [user_id, amount, category, description, expense_date, original_currency || companyCurrency, exchangeRate, companyAmount, paid_by, 'pending']
     );
 
     // Create approval workflow
