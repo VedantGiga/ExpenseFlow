@@ -1,20 +1,82 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '../utils/api';
 
 const AdminApprovalView = () => {
   const [formData, setFormData] = useState({
-    user: 'marc',
+    user: '',
     description: 'Approval rule for miscellaneous expenses',
-    manager: 'sarah',
+    manager: '',
     isManagerApprover: false,
     approversSequence: false,
     minApprovalPercentage: ''
   });
 
-  const [approvers, setApprovers] = useState([
-    { name: 'John', required: false },
-    { name: 'Mitchell', required: false },
-    { name: 'Andreas', required: false }
-  ]);
+  const [approvers, setApprovers] = useState([]);
+  const [managers, setManagers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/users');
+      const users = response.data;
+      setAllUsers(users);
+      
+      // Set managers (manager and admin roles)
+      const managerList = users.filter(user => user.role === 'manager' || user.role === 'admin');
+      setManagers(managerList);
+      
+      // Set approvers (all users who can approve - managers and admins)
+      const approverList = users
+        .filter(user => user.role === 'manager' || user.role === 'admin')
+        .map(user => ({ id: user.id, name: user.name, required: false }));
+      setApprovers(approverList);
+      
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    }
+  };
+
+  const handleUserChange = (userName) => {
+    setFormData(prev => ({ ...prev, user: userName }));
+    
+    // Find selected user and set their manager
+    const user = allUsers.find(u => u.name === userName);
+    if (user) {
+      setSelectedUser(user);
+      setFormData(prev => ({ 
+        ...prev, 
+        manager: user.manager_name || '' 
+      }));
+    }
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const ruleData = {
+        ...formData,
+        approvers: approvers.filter(a => a.required),
+        allApprovers: approvers
+      };
+      
+      console.log('Saving approval rule:', ruleData);
+      // Here you would call the API to save the rule
+      // await api.post('/approval-rules', ruleData);
+      
+      alert('Approval rule saved successfully!');
+    } catch (error) {
+      console.error('Failed to save rule:', error);
+      alert('Failed to save rule');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateApprover = (index, field, value) => {
     const newApprovers = [...approvers];
@@ -35,13 +97,18 @@ const AdminApprovalView = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">User</label>
-                <input
-                  type="text"
+                <select
                   value={formData.user}
-                  onChange={(e) => setFormData({...formData, user: e.target.value})}
-                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-500"
-                  placeholder="marc"
-                />
+                  onChange={(e) => handleUserChange(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
+                >
+                  <option value="">Select User</option>
+                  {allUsers.map(user => (
+                    <option key={user.id} value={user.name}>
+                      {user.name} ({user.role})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -56,16 +123,26 @@ const AdminApprovalView = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Manager</label>
-                <input
-                  type="text"
+                <select
                   value={formData.manager}
                   onChange={(e) => setFormData({...formData, manager: e.target.value})}
-                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 placeholder-gray-500"
-                  placeholder="sarah"
-                />
+                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
+                >
+                  <option value="">Select Manager</option>
+                  {managers.map(manager => (
+                    <option key={manager.id} value={manager.name}>
+                      {manager.name} ({manager.role})
+                    </option>
+                  ))}
+                </select>
                 <p className="text-xs text-gray-600 mt-2">
                   Dynamic dropdown. Initially the manager of the record should be set, admin can change manager for approval if required.
                 </p>
+                {selectedUser && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    Current user's manager: {selectedUser.manager_name || 'None assigned'}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -85,6 +162,9 @@ const AdminApprovalView = () => {
                   />
                   Is manager an approver?
                 </label>
+                <p className="text-xs text-blue-600 mt-2">
+                  If checked, approval requests will go to the manager first before other approvers.
+                </p>
               </div>
 
               <div>
@@ -96,7 +176,7 @@ const AdminApprovalView = () => {
                     </div>
                   </div>
                   {approvers.map((approver, index) => (
-                    <div key={index} className="px-4 py-3 border-b border-gray-300 last:border-b-0">
+                    <div key={approver.id} className="px-4 py-3 border-b border-gray-300 last:border-b-0">
                       <div className="grid grid-cols-2 gap-4 items-center">
                         <span className="text-gray-900">{approver.name}</span>
                         <input
@@ -162,8 +242,12 @@ const AdminApprovalView = () => {
           <button className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
             Cancel
           </button>
-          <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            Save Rule
+          <button 
+            onClick={handleSave}
+            disabled={loading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            {loading ? 'Saving...' : 'Save Rule'}
           </button>
         </div>
       </div>
