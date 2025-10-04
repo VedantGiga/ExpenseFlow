@@ -15,6 +15,7 @@ import AdminApprovalView from './pages/AdminApprovalView';
 import EmployeeExpenses from './pages/EmployeeExpenses';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import AddExpense from './pages/AddExpense';
+import MyExpenses from './pages/MyExpenses';
 
 const Layout = ({ children }) => {
   const { user } = useAuth();
@@ -41,7 +42,7 @@ const RoleBasedRedirect = () => {
   } else if (user.role === 'manager') {
     return <Navigate to="/approvals" replace />;
   } else {
-    return <Navigate to="/expenses" replace />;
+    return <Navigate to="/employee-dashboard" replace />;
   }
 };
 
@@ -84,6 +85,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['employee', 'manager', 'admin']}>
                   <AddExpense />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/my-expenses"
+              element={
+                <ProtectedRoute allowedRoles={['employee', 'manager', 'admin']}>
+                  <MyExpenses />
                 </ProtectedRoute>
               }
             />

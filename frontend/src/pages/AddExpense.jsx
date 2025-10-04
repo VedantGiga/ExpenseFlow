@@ -38,8 +38,12 @@ const AddExpense = () => {
         ...formData,
         original_currency: formData.currency
       });
+<<<<<<< HEAD
       setIsSubmitted(true);
       setTimeout(() => navigate('/employee-expenses'), 2000);
+=======
+      navigate('/employee-dashboard');
+>>>>>>> 59b03e5b268a2953d7a406a6da0fd596771726c3
     } catch (error) {
       console.error('Failed to create expense:', error);
     }
@@ -48,8 +52,9 @@ const AddExpense = () => {
   const managers = employees.filter(emp => emp.role === 'manager' || emp.role === 'admin');
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-2xl mx-auto">
+<<<<<<< HEAD
         <div className="bg-white rounded-lg shadow-sm p-8">
           {isSubmitted ? (
             <div className="text-center py-12">
@@ -68,6 +73,21 @@ const AddExpense = () => {
                   ✕
                 </button>
               </div>
+=======
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Expense</h1>
+              <p className="text-gray-600">Submit your expense for approval</p>
+            </div>
+            <button 
+              onClick={() => navigate('/employee-dashboard')}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors"
+            >
+              ← Back to Dashboard
+            </button>
+          </div>
+>>>>>>> 59b03e5b268a2953d7a406a6da0fd596771726c3
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -171,7 +191,7 @@ const AddExpense = () => {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/employee-expenses')}
+                onClick={() => navigate('/employee-dashboard')}
                 className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancel
