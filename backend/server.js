@@ -365,7 +365,7 @@ app.post('/api/users/:id/send-password', authenticateToken, async (req, res) => 
   }
 });
 
-// Forgot password endpoint
+// Generate OTP for forgot password
 app.post('/api/auth/forgot-password', async (req, res) => {
   const { email } = req.body;
   try {
@@ -375,19 +375,57 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Generate random password
-    const randomPassword = Math.random().toString(36).slice(-8) + Math.floor(Math.random() * 100);
-    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     
-    // Update user password
-    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashedPassword, user.rows[0].id]);
+    // Try to add OTP columns if they don't exist
+    try {
+      await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS otp VARCHAR(6), ADD COLUMN IF NOT EXISTS otp_expiry TIMESTAMP');
+    } catch (alterError) {
+      console.log('OTP columns may already exist');
+    }
+    
+    // Store OTP in database
+    await pool.query('UPDATE users SET otp = $1, otp_expiry = $2 WHERE id = $3', [otp, otpExpiry, user.rows[0].id]);
     
     res.json({ 
-      message: 'Password reset successfully', 
+      message: 'OTP sent successfully', 
       email: user.rows[0].email,
       name: user.rows[0].name,
-      password: randomPassword
+      otp: otp
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Verify OTP and reset password
+app.post('/api/auth/verify-otp', async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  try {
+    const user = await pool.query('SELECT id, otp, otp_expiry FROM users WHERE email = $1', [email]);
+    
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userData = user.rows[0];
+    
+    // Check if OTP is valid and not expired
+    if (userData.otp !== otp) {
+      return res.status(400).json({ error: 'Invalid OTP' });
+    }
+    
+    if (new Date() > new Date(userData.otp_expiry)) {
+      return res.status(400).json({ error: 'OTP has expired' });
+    }
+
+    // Hash new password and update
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password_hash = $1, otp = NULL, otp_expiry = NULL WHERE id = $2', [hashedPassword, userData.id]);
+    
+    res.json({ message: 'Password reset successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
