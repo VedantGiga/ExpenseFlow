@@ -28,6 +28,20 @@ const Layout = ({ children }) => {
   );
 };
 
+const RoleBasedRedirect = () => {
+  const { user } = useAuth();
+  
+  if (!user) return <Navigate to="/login" replace />;
+  
+  if (user.role === 'admin') {
+    return <Navigate to="/admin-approval-view" replace />;
+  } else if (user.role === 'manager') {
+    return <Navigate to="/approvals" replace />;
+  } else {
+    return <Navigate to="/expenses" replace />;
+  }
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -36,7 +50,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/admin-signup" element={<AdminSignup />} />
-            <Route path="/" element={<Navigate to="/admin-approval-view" replace />} />
+            <Route path="/" element={<RoleBasedRedirect />} />
 
             <Route
               path="/expenses"
