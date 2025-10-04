@@ -40,7 +40,7 @@ export const sendPasswordEmail = async (userEmail, userName, password) => {
 
 export const sendOTPEmail = async (userEmail, userName, otp) => {
   try {
-    console.log('Sending OTP email to:', userEmail, 'Name:', userName);
+    console.log('Sending OTP email to:', userEmail, 'Name:', userName, 'OTP:', otp);
     
     if (!window.emailjs) {
       throw new Error('EmailJS not loaded');
@@ -49,8 +49,7 @@ export const sendOTPEmail = async (userEmail, userName, otp) => {
     const templateParams = {
       to_email: userEmail,
       from_name: 'ExpenseFlow Support',
-      user_name: userName,
-      otp_code: otp
+      message: `To authenticate, please use the following One Time Password (OTP): ${otp}\n\nThis OTP will be valid for 10 minutes.\n\nDo not share this OTP with anyone. If you didn't make this request, you can safely ignore this email.\nExpenseFlow will never contact you about this email or ask for any login codes or links. Beware of phishing scams.\n\nThanks for visiting ExpenseFlow!`
     };
 
     console.log('OTP template params:', templateParams);
