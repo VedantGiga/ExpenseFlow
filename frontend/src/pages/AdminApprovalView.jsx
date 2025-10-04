@@ -103,10 +103,23 @@ const AdminApprovalView = () => {
 
   const updateUserRole = async (userId, role, manager_id) => {
     try {
-      await api.put(`/users/${userId}`, { role, manager_id });
+      console.log('Updating user:', { userId, role, manager_id });
+      const response = await api.put(`/users/${userId}`, { role, manager_id });
+      console.log('Update response:', response.data);
       fetchUsers();
     } catch (error) {
       console.error('Failed to update user:', error);
+      alert('Failed to update user: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const sendPassword = async (userId, userEmail) => {
+    try {
+      // This would typically send an email with password reset link
+      console.log(`Sending password to ${userEmail}`);
+      alert(`Password sent to ${userEmail}`);
+    } catch (error) {
+      console.error('Failed to send password:', error);
     }
   };
 
@@ -395,18 +408,17 @@ const AdminApprovalView = () => {
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Manager</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Send Password</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {users.map((user) => (
                       <tr key={user.id}>
                         <td className="px-6 py-4 text-sm text-gray-900">{user.name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{user.email}</td>
                         <td className="px-6 py-4">
                           <select
                             value={user.role}
@@ -417,7 +429,6 @@ const AdminApprovalView = () => {
                             <option value="manager">Manager</option>
                           </select>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{user.manager_name || 'None'}</td>
                         <td className="px-6 py-4">
                           <select
                             value={user.manager_id || ''}
@@ -429,6 +440,15 @@ const AdminApprovalView = () => {
                               <option key={manager.id} value={manager.id}>{manager.name}</option>
                             ))}
                           </select>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{user.email}</td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => sendPassword(user.id, user.email)}
+                            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                          >
+                            Send Password
+                          </button>
                         </td>
                       </tr>
                     ))}

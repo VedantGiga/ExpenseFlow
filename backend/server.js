@@ -216,7 +216,7 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT u.id, u.name, u.email, u.role, m.name as manager_name FROM users u LEFT JOIN users m ON u.manager_id = m.id WHERE u.company_id = $1',
+      'SELECT u.id, u.name, u.email, u.role, u.manager_id, m.name as manager_name FROM users u LEFT JOIN users m ON u.manager_id = m.id WHERE u.company_id = $1',
       [req.user.company_id]
     );
     res.json(result.rows);
