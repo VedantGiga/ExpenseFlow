@@ -5,18 +5,11 @@ import Navbar from './components/Navbar';
 
 import Login from './pages/Login';
 import AdminSignup from './pages/AdminSignup';
-import OTPVerification from './pages/OTPVerification';
-import Dashboard from './pages/Dashboard';
 import Expenses from './pages/Expenses';
 import Approvals from './pages/Approvals';
-import Settings from './pages/Settings';
-import UserManagement from './pages/UserManagement';
-import ApprovalRules from './pages/ApprovalRules';
 import AdminApprovalView from './pages/AdminApprovalView';
-import EmployeeExpenses from './pages/EmployeeExpenses';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 import AddExpense from './pages/AddExpense';
-import MyExpenses from './pages/MyExpenses';
 
 const Layout = ({ children }) => {
   const { user } = useAuth();
@@ -55,7 +48,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/admin-signup" element={<AdminSignup />} />
-            <Route path="/otp-verification" element={<OTPVerification />} />
+
             <Route path="/" element={<RoleBasedRedirect />} />
 
             <Route
@@ -66,14 +59,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/employee-expenses"
-              element={
-                <ProtectedRoute allowedRoles={['employee', 'manager', 'admin']}>
-                  <EmployeeExpenses />
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/employee-dashboard"
               element={
@@ -90,14 +76,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/my-expenses"
-              element={
-                <ProtectedRoute allowedRoles={['employee', 'manager', 'admin']}>
-                  <MyExpenses />
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/approvals"
               element={
@@ -106,30 +85,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/users"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <UserManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/approval-rules"
-              element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <ApprovalRules />
-                </ProtectedRoute>
-              }
-            />
+
+
+
             <Route
               path="/admin-approval-view"
               element={
