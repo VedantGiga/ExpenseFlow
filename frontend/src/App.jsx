@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 
 import Login from './pages/Login';
 import AdminSignup from './pages/AdminSignup';
+import OTPVerification from './pages/OTPVerification';
 import Expenses from './pages/Expenses';
 import Approvals from './pages/Approvals';
 import AdminApprovalView from './pages/AdminApprovalView';
@@ -48,7 +49,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/admin-signup" element={<AdminSignup />} />
-
+            <Route path="/otp-verification" element={<OTPVerification />} />
             <Route path="/" element={<RoleBasedRedirect />} />
 
             <Route

@@ -246,10 +246,13 @@ app.post('/api/users', authenticateToken, async (req, res) => {
 
   const { name, email, role, manager_id } = req.body;
   try {
-    // Create user without password - admin will send password later
+    // Generate temporary password that will be replaced when admin sends actual password
+    const tempPassword = Math.random().toString(36).slice(-12);
+    const hashedTempPassword = await bcrypt.hash(tempPassword, 10);
+    
     const result = await pool.query(
       'INSERT INTO users (name, email, password_hash, role, company_id, manager_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role',
-      [name, email, null, role, req.user.company_id, manager_id || null]
+      [name, email, hashedTempPassword, role, req.user.company_id, manager_id || null]
     );
     res.json(result.rows[0]);
   } catch (error) {
