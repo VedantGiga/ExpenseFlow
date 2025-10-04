@@ -30,7 +30,6 @@ A modern expense management web application with role-based access control, real
 ### Prerequisites
 - Node.js 18+
 - PostgreSQL database (Neon recommended)
-- EmailJS account for email services
 
 ### Installation
 
@@ -62,19 +61,8 @@ JWT_EXPIRES_IN=7d
 COMPANY_BASE_CURRENCY=USD
 ```
 
-5. **Database Migration**
-```bash
-cd backend
-# Run migrations in order
-psql $DATABASE_URL -f database/migrations/001_initial.sql
-psql $DATABASE_URL -f database/migrations/002_add_country.sql
-psql $DATABASE_URL -f database/migrations/003_company_structure.sql
-psql $DATABASE_URL -f database/migrations/004_approval_workflow.sql
-psql $DATABASE_URL -f database/migrations/005_add_paid_by.sql
-psql $DATABASE_URL -f database/migrations/006_add_otp_columns.sql
-```
 
-6. **Start Development Servers**
+5. **Start Development Servers**
 
 Backend:
 ```bash
