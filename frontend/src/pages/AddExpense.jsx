@@ -16,6 +16,7 @@ const AddExpense = () => {
     expense_date: '',
     approver_id: ''
   });
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     fetchEmployees();
@@ -37,7 +38,8 @@ const AddExpense = () => {
         ...formData,
         original_currency: formData.currency
       });
-      navigate('/employee-expenses');
+      setIsSubmitted(true);
+      setTimeout(() => navigate('/employee-expenses'), 2000);
     } catch (error) {
       console.error('Failed to create expense:', error);
     }
@@ -49,15 +51,23 @@ const AddExpense = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Add New Expense</h1>
-            <button 
-              onClick={() => navigate('/employee-expenses')}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              ✕
-            </button>
-          </div>
+          {isSubmitted ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">✅</div>
+              <h2 className="text-2xl font-bold text-green-600 mb-2">Expense Submitted Successfully!</h2>
+              <p className="text-gray-600">Your expense has been submitted for approval.</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-2xl font-bold text-gray-900">Add New Expense</h1>
+                <button 
+                  onClick={() => navigate('/employee-expenses')}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -168,6 +178,8 @@ const AddExpense = () => {
               </button>
             </div>
           </form>
+            </>
+          )}
         </div>
       </div>
     </div>

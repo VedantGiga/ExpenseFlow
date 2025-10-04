@@ -154,20 +154,27 @@ app.get('/api/expenses', authenticateToken, async (req, res) => {
 
 // Create expense
 app.post('/api/expenses', authenticateToken, async (req, res) => {
-  const { amount, category, description, expense_date, original_currency, paid_by } = req.body;
+  const { amount, category, description, expense_date, original_currency } = req.body;
   const user_id = req.user.id;
   try {
     // Get company currency for conversion
     const company = await pool.query('SELECT currency FROM companies WHERE id = $1', [req.user.company_id]);
     const companyCurrency = company.rows[0]?.currency || process.env.COMPANY_BASE_CURRENCY || 'USD';
     
-    // Simple exchange rate (in real app, use currency API)
-    const exchangeRate = original_currency === companyCurrency ? 1.0 : 0.85;
-    const companyAmount = amount * exchangeRate;
+    // Get real exchange rate
+    let exchangeRate = 1.0;
+    let companyAmount = amount;
+    
+    if (original_currency && original_currency !== companyCurrency) {
+      const response = await fetch(`https://v6.exchangerate-api.com/v6/84f73baaf9024876f249e20b/latest/${original_currency}`);
+      const data = await response.json();
+      exchangeRate = data.conversion_rates[companyCurrency];
+      companyAmount = Math.round(amount * exchangeRate * 100) / 100;
+    }
 
     const result = await pool.query(
-      'INSERT INTO expenses (user_id, amount, category, description, expense_date, original_currency, exchange_rate, company_currency_amount, paid_by, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-      [user_id, amount, category, description, expense_date, original_currency || companyCurrency, exchangeRate, companyAmount, paid_by, 'pending']
+      'INSERT INTO expenses (user_id, amount, category, description, expense_date, original_currency, exchange_rate, company_currency_amount, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *',
+      [user_id, amount, category, description, expense_date, original_currency || companyCurrency, exchangeRate, companyAmount, 'pending']
     );
 
     // Create approval workflow
@@ -182,15 +189,37 @@ app.post('/api/expenses', authenticateToken, async (req, res) => {
 // Get pending approvals for current user
 app.get('/api/approvals', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT e.*, u.name as employee_name, ea.comments, ea.step_order, c.currency as company_currency
-      FROM expenses e 
-      JOIN users u ON e.user_id = u.id 
-      JOIN expense_approvals ea ON e.id = ea.expense_id
-      JOIN companies c ON u.company_id = c.id
-      WHERE ea.approver_id = $1 AND ea.status = 'pending' AND e.current_step = ea.step_order
-      ORDER BY e.created_at DESC
-    `, [req.user.id]);
+    let query;
+    let params;
+    
+    if (req.user.role === 'manager') {
+      // For managers, show expenses from their assigned employees that need approval
+      query = `
+        SELECT e.*, u.name as employee_name, c.currency as company_currency,
+               e.original_currency, e.amount, e.company_currency_amount,
+               e.category, e.status, e.expense_date, e.description
+        FROM expenses e 
+        JOIN users u ON e.user_id = u.id 
+        JOIN companies c ON u.company_id = c.id
+        WHERE u.manager_id = $1 AND e.status = 'pending' AND u.company_id = $2
+        ORDER BY e.created_at DESC
+      `;
+      params = [req.user.id, req.user.company_id];
+    } else {
+      // For other roles, use the existing approval workflow logic
+      query = `
+        SELECT e.*, u.name as employee_name, ea.comments, ea.step_order, c.currency as company_currency
+        FROM expenses e 
+        JOIN users u ON e.user_id = u.id 
+        JOIN expense_approvals ea ON e.id = ea.expense_id
+        JOIN companies c ON u.company_id = c.id
+        WHERE ea.approver_id = $1 AND ea.status = 'pending' AND e.current_step = ea.step_order AND u.company_id = $2
+        ORDER BY e.created_at DESC
+      `;
+      params = [req.user.id, req.user.company_id];
+    }
+    
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -201,6 +230,7 @@ app.get('/api/approvals', authenticateToken, async (req, res) => {
 app.post('/api/approvals/:expenseId', authenticateToken, async (req, res) => {
   const { status, comments } = req.body;
   try {
+    // Use approval workflow for all roles
     const result = await processApproval(req.params.expenseId, req.user.id, status, comments);
     res.json(result);
   } catch (error) {

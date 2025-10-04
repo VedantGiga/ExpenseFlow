@@ -2,31 +2,28 @@ import { useState, useEffect } from 'react';
 import { api } from '../utils/api';
 
 const Approvals = () => {
-  const [approvals, setApprovals] = useState([
-    {
-      id: 1,
-      subject: 'none',
-      owner: 'Sarah',
-      category: 'Food',
-      status: 'Approved',
-      amount: 567,
-      currency: 'USD',
-      convertedAmount: 49986,
-      companyCurrency: 'INR'
-    }
-  ]);
+  const [approvals, setApprovals] = useState([]);
   const [loading, setLoading] = useState({});
+
+  useEffect(() => {
+    fetchApprovals();
+  }, []);
+
+  const fetchApprovals = async () => {
+    try {
+      const response = await api.get('/approvals');
+      setApprovals(response.data);
+    } catch (error) {
+      console.error('Failed to fetch approvals:', error);
+    }
+  };
 
   const handleApproval = async (id, status) => {
     setLoading({ ...loading, [id]: true });
     try {
-      // API call would go here
-      console.log(`${status} approval ${id}`);
-      
-      // Update local state
-      setApprovals(prev => prev.map(approval => 
-        approval.id === id ? { ...approval, status: status === 'approved' ? 'Approved' : 'Rejected' } : approval
-      ));
+      await api.post(`/approvals/${id}`, { status });
+      // Refresh the approvals list
+      await fetchApprovals();
     } catch (error) {
       console.error('Failed to process approval:', error);
     } finally {
@@ -82,30 +79,30 @@ const Approvals = () => {
                 {approvals.map((approval) => (
                   <tr key={approval.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-8 py-6 whitespace-nowrap text-sm text-gray-900">
-                      {approval.subject}
+                      {approval.description || 'Expense Request'}
                     </td>
                     <td className="px-8 py-6 whitespace-nowrap text-sm text-gray-900">
-                      {approval.owner}
+                      {approval.employee_name}
                     </td>
                     <td className="px-8 py-6 whitespace-nowrap text-sm text-gray-900">
                       {approval.category}
                     </td>
                     <td className="px-8 py-6 whitespace-nowrap">
                       <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                        approval.status === 'Approved' 
+                        approval.status === 'approved' 
                           ? 'bg-green-100 text-green-800'
-                          : approval.status === 'Rejected'
+                          : approval.status === 'rejected'
                           ? 'bg-red-100 text-red-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {approval.status}
+                        {approval.status.charAt(0).toUpperCase() + approval.status.slice(1)}
                       </span>
                     </td>
                     <td className="px-8 py-6 whitespace-nowrap text-sm text-gray-900">
                       <div>
-                        <div className="font-medium">{approval.amount} {approval.currency}</div>
+                        <div className="font-medium">{(approval.company_currency_amount || approval.amount)?.toLocaleString()} {approval.company_currency || approval.original_currency}</div>
                         <div className="text-gray-500 text-xs">
-                          (in {approval.companyCurrency}) = {approval.convertedAmount.toLocaleString()}
+                          (original: {approval.amount} {approval.original_currency})
                         </div>
                       </div>
                     </td>
@@ -128,17 +125,13 @@ const Approvals = () => {
                   </tr>
                 ))}
                 
-                {/* Empty Rows */}
-                {[...Array(4)].map((_, index) => (
-                  <tr key={`empty-${index}`} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-8 py-6 whitespace-nowrap text-sm text-gray-400">—</td>
-                    <td className="px-8 py-6 whitespace-nowrap text-sm text-gray-400">—</td>
-                    <td className="px-8 py-6 whitespace-nowrap text-sm text-gray-400">—</td>
-                    <td className="px-8 py-6 whitespace-nowrap text-sm text-gray-400">—</td>
-                    <td className="px-8 py-6 whitespace-nowrap text-sm text-gray-400">—</td>
-                    <td className="px-8 py-6 whitespace-nowrap text-sm text-gray-400">—</td>
+                {approvals.length === 0 && (
+                  <tr>
+                    <td colSpan="6" className="px-8 py-12 text-center text-gray-500">
+                      No pending approvals
+                    </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
