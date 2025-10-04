@@ -418,7 +418,7 @@ const AdminApprovalView = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {users.map((user) => (
+                    {users.filter(user => user.role !== 'admin').map((user) => (
                       <tr key={user.id}>
                         <td className="px-6 py-4 text-sm text-gray-900">{user.name}</td>
                         <td className="px-6 py-4">

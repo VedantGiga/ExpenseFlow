@@ -365,6 +365,34 @@ app.post('/api/users/:id/send-password', authenticateToken, async (req, res) => 
   }
 });
 
+// Forgot password endpoint
+app.post('/api/auth/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await pool.query('SELECT id, name, email FROM users WHERE email = $1', [email]);
+    
+    if (user.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate random password
+    const randomPassword = Math.random().toString(36).slice(-8) + Math.floor(Math.random() * 100);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+    
+    // Update user password
+    await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [hashedPassword, user.rows[0].id]);
+    
+    res.json({ 
+      message: 'Password reset successfully', 
+      email: user.rows[0].email,
+      name: user.rows[0].name,
+      password: randomPassword
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
