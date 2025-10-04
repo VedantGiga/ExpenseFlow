@@ -20,7 +20,7 @@ const Login = () => {
     try {
       const response = await api.post('/auth/login', formData);
       localStorage.setItem('token', response.data.token);
-      login(response.data.user.role);
+      login(response.data.user);
       
       // Role-based redirect
       if (response.data.user.role === 'admin') {

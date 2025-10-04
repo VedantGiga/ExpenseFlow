@@ -53,7 +53,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/admin-signup" element={<AdminSignup />} />
-            <Route path="/" element={<RoleBasedRedirect />} />
+
 
             <Route
               path="/expenses"

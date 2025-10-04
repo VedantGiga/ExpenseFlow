@@ -6,8 +6,8 @@ const Navbar = () => {
   const location = useLocation();
 
   const navItems = [
-    { path: '/dashboard', label: 'Dashboard', roles: ['employee', 'manager', 'admin'] },
-    { path: '/employee-dashboard', label: 'My Expenses', roles: ['employee', 'manager', 'admin'] },
+    { path: '/dashboard', label: 'Dashboard', roles: ['manager', 'admin'] },
+    { path: '/employee-dashboard', label: 'My Expenses', roles: ['manager', 'admin'] },
     { path: '/approvals', label: 'Approvals', roles: ['manager', 'admin'] },
     { path: '/users', label: 'Users', roles: ['admin'] },
     { path: '/approval-rules', label: 'Rules', roles: ['admin'] },
